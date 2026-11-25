@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="732" height="549" viewBox="160 228 732 549">
+  <!-- Menu bar icon: a monochrome outline of the AppIcon.svg character, cropped to the artwork.
+       It's used as a template image, so only the alpha channel matters: macOS tints it to
+       match the menu bar. Strokes are thicker than in AppIcon.svg to stay legible at 18pt. -->
+  <g fill="#000000" stroke="#000000" stroke-linejoin="round" stroke-linecap="round">
+    <!-- incoming packets -->
+    <rect x="180" y="560" width="30" height="30" rx="8" stroke="none"/>
+    <rect x="232" y="538" width="70" height="70" rx="16" stroke="none"/>
+
+    <!-- outgoing arrow -->
+    <path d="M724 574 H812" fill="none" stroke-width="40"/>
+    <path d="M790 504 L882 574 L790 644 Z" stroke-width="16"/>
+
+    <!-- antenna -->
+    <path d="M512 376 C512 336 540 318 556 296" fill="none" stroke-width="30"/>
+    <circle cx="562" cy="268" r="36" stroke="none"/>
+
+    <!-- the proxy blob, as an outline -->
+    <path d="M512 376
+             C640 376 724 456 724 572
+             C724 690 640 760 512 760
+             C384 760 300 690 300 572
+             C300 456 384 376 512 376 Z"
+          fill="none" stroke-width="40"/>
+
+    <!-- face -->
+    <ellipse cx="446" cy="550" rx="32" ry="44" stroke="none"/>
+    <ellipse cx="578" cy="550" rx="32" ry="44" stroke="none"/>
+    <path d="M470 636 q21 30 42 0 q21 30 42 0" fill="none" stroke-width="26"/>
+  </g>
+</svg>

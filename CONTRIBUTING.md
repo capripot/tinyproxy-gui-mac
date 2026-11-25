@@ -38,10 +38,12 @@ Resources/
   Info.plist                      Bundle metadata, copied in by build-app.sh
   AppIcon.svg                     Icon source
   AppIcon.icns                    Generated icon, committed
+  StatusIcon.svg                  Menu bar icon source (monochrome outline of the AppIcon character)
+  StatusIcon.tiff                 Generated menu bar icon (1x and 2x), committed
 scripts/
   build-app.sh                    Builds the universal release .app bundle into build/
   make-dmg.sh                     Runs build-app.sh, then packages the app as a .dmg
-  make-icon.sh                    Regenerates AppIcon.icns from AppIcon.svg
+  make-icon.sh                    Regenerates AppIcon.icns and StatusIcon.tiff from their SVGs
 ```
 
 ## How the code fits together
@@ -130,13 +132,15 @@ The build also installs `asciidoc` and `docbook-xsl` as build dependencies.
 
 ## Changing the icon
 
-Edit `Resources/AppIcon.svg`, then regenerate the `.icns` (needs `brew install librsvg`):
+Edit `Resources/AppIcon.svg`, then regenerate the icons (needs `brew install librsvg`):
 
 ```sh
 ./scripts/make-icon.sh
 ```
 
 Commit both the SVG and the regenerated `AppIcon.icns`. Keep the macOS icon proportions: the rounded square spans 824×824 in a 1024×1024 canvas, leaving room for the drop shadow. Also check that the icon still reads at 32px.
+
+The menu bar icon, `Resources/StatusIcon.svg`, is a monochrome outline of the same character. If you change the character, update it too. The app uses it as a template image, so macOS tints it to match the menu bar and only its shapes and transparency matter: draw it in solid black and cut details out with transparency, not with other colors. Keep its 4:3 viewBox and tight crop, since the script renders it at 24×18pt, and keep lines thick enough to survive that size. Commit the regenerated `StatusIcon.tiff`.
 
 ## Submitting changes
 

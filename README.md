@@ -25,6 +25,7 @@ Tinyproxy GUI doesn't replace or modify tinyproxy. It installs the official buil
 - **Guided install**: if tinyproxy isn't installed, the app offers to install it with Homebrew. It never installs anything without asking.
 - **Homebrew check**: if Homebrew isn't installed, the app tells you and links to [brew.sh](https://brew.sh/).
 - **Logs**: **View → Logs** (⌘L) opens tinyproxy's log file in Console.
+- **Menu bar icon**: click it to open the window. Right-click it to hide or show the Dock icon, or to quit.
 - **Live updates**: notices right away when tinyproxy exits or when the service is started or stopped from a terminal, and checks once a minute as a fallback. The time of the last check is shown at the bottom of the window.
 
 ## Requirements
@@ -64,8 +65,13 @@ Launch the app. On first run, if tinyproxy isn't installed, you'll be asked whet
 | Tinyproxy menu | Start / Stop | ⇧⌘S |
 | Tinyproxy menu | Refresh | ⌘R |
 | View menu | Logs | ⌘L |
+| View menu | Show Dock Icon | |
+| Menu bar icon | Click: open the window | |
+| Menu bar icon | Right-click: Open, Show Dock Icon, Quit | |
 
-Closing the window quits the app. tinyproxy keeps running (or stays stopped), because it's managed by macOS's launchd, not by this app.
+Closing the window keeps the app running in the menu bar; click the menu bar icon (or the Dock icon) to bring the window back. With the Dock icon hidden, the app has no menu bar of its own, so quit it from the menu bar icon's right-click menu.
+
+Quitting the app doesn't affect tinyproxy: it keeps running (or stays stopped), because it's managed by macOS's launchd, not by this app.
 
 ### Configuring tinyproxy
 
