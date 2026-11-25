@@ -16,8 +16,9 @@ cd tinyproxy-gui
 
 swift build                 # debug build, quick compile check
 swift run                   # run the debug build without an .app bundle
-./scripts/build-app.sh      # release build packaged as build/Tinyproxy.app
+./scripts/build-app.sh      # universal release build packaged as build/Tinyproxy.app
 open build/Tinyproxy.app
+./scripts/make-dmg.sh       # build/Tinyproxy-<version>.dmg for distribution
 ```
 
 `swift run` works for quick iterations, but test the final behavior with the `.app` from `build-app.sh`. That's the only setup where the icon, `Info.plist` and the Finder launch environment (no shell `PATH`) apply.
@@ -38,7 +39,8 @@ Resources/
   AppIcon.svg                     Icon source
   AppIcon.icns                    Generated icon, committed
 scripts/
-  build-app.sh                    Builds the release .app bundle into build/
+  build-app.sh                    Builds the universal release .app bundle into build/
+  make-dmg.sh                     Runs build-app.sh, then packages the app as a .dmg
   make-icon.sh                    Regenerates AppIcon.icns from AppIcon.svg
 ```
 

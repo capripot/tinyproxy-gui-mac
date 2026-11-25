@@ -50,7 +50,7 @@ cp -R build/Tinyproxy.app /Applications/
 open /Applications/Tinyproxy.app
 ```
 
-The app is signed ad hoc (a local signature, not an Apple developer certificate), which is fine for apps you build yourself. If you copy it to another Mac, Gatekeeper may block it the first time; right-click the app and choose **Open** to allow it.
+The app is signed ad hoc (a local signature, not an Apple developer certificate), which is fine for apps you build yourself. If you copy it to another Mac or download it, Gatekeeper blocks it the first time. Try to open it, then go to **System Settings → Privacy & Security** and click **Open Anyway**.
 
 ## Usage
 
