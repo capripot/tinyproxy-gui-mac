@@ -36,6 +36,10 @@ struct TinyproxyCommands: Commands {
     @AppStorage(AppSettings.showDockIconKey) private var showDockIcon = true
 
     var body: some Commands {
+        CommandGroup(replacing: .appInfo) {
+            Button("About Tinyproxy") { AboutPanel.show() }
+        }
+
         CommandMenu("Tinyproxy") {
             Button(monitor.running ? "Stop" : "Start") {
                 Task { await monitor.toggleService() }
@@ -61,6 +65,22 @@ struct TinyproxyCommands: Commands {
             Divider()
             Toggle("Show Dock Icon", isOn: $showDockIcon)
         }
+    }
+}
+
+/// The standard About panel, showing the git commit in place of the build number: "Version 2.0 (abc1234)".
+@MainActor
+enum AboutPanel {
+    /// Written into the bundle's Info.plist by scripts/build-app.sh.
+    static let commitKey = "TinyproxyGUIGitCommit"
+
+    static func show() {
+        var options: [NSApplication.AboutPanelOptionKey: Any] = [:]
+        if let commit = Bundle.main.object(forInfoDictionaryKey: commitKey) as? String {
+            options[.version] = commit
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.orderFrontStandardAboutPanel(options: options)
     }
 }
 
