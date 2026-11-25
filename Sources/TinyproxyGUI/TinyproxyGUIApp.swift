@@ -4,18 +4,16 @@ import SwiftUI
 @main
 struct TinyproxyGUIApp: App {
     @NSApplicationDelegateAdaptor private var appDelegate: AppDelegate
-    @StateObject private var monitor = TinyproxyMonitor()
 
     var body: some Scene {
         Window("Tinyproxy", id: "main") {
             ContentView()
-                .environmentObject(monitor)
-                .onAppear { monitor.start() }
+                .environmentObject(appDelegate.monitor)
                 .modifier(MainWindowOpenerCapture(appDelegate: appDelegate))
         }
         .windowResizability(.contentSize)
         .commands {
-            TinyproxyCommands(monitor: monitor)
+            TinyproxyCommands(monitor: appDelegate.monitor)
         }
     }
 }
@@ -49,6 +47,11 @@ struct TinyproxyCommands: Commands {
                 Task { await monitor.refresh() }
             }
             .keyboardShortcut("r")
+
+            Divider()
+            Button(StatusReportingDialog.menuTitle) {
+                StatusReportingDialog.present(for: monitor)
+            }
         }
 
         // The `.sidebar` group lives in the View menu.
@@ -73,6 +76,10 @@ extension UserDefaults {
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    /// Owned here rather than by the window, so checks and status reporting keep running
+    /// while the window is closed.
+    let monitor = TinyproxyMonitor()
+
     /// Opens the main window, or brings it to the front if it's already open. Set once the window appears.
     var openMainWindow: (() -> Void)?
 
@@ -86,6 +93,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        monitor.start()
         setUpStatusItem()
         dockIconObservation = UserDefaults.standard.observe(\.showDockIcon) { [weak self] _, _ in
             Task { @MainActor in self?.applyDockIconPreference() }
@@ -177,6 +185,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dockIcon.state = UserDefaults.standard.showDockIcon ? .on : .off
         menu.addItem(dockIcon)
 
+        let reporting = NSMenuItem(title: StatusReportingDialog.menuTitle, action: #selector(configureReporting), keyEquivalent: "")
+        reporting.target = self
+        menu.addItem(reporting)
+
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit Tinyproxy", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
@@ -188,5 +200,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func openFromMenu() {
         showMainWindow()
+    }
+
+    @objc private func configureReporting() {
+        StatusReportingDialog.present(for: monitor)
     }
 }

@@ -34,6 +34,7 @@ Sources/TinyproxyGUI/
   ContentView.swift               The window's UI
   TinyproxyMonitor.swift          State, refresh logic, watchers, actions, log lookup
   Brew.swift                      Locating and running `brew`, decoding its JSON
+  StatusReporting.swift           StatusCake push client and the reporting configuration dialog
 Resources/
   Info.plist                      Bundle metadata, copied in by build-app.sh
   AppIcon.svg                     Icon source
@@ -54,6 +55,8 @@ scripts/
   1. A kqueue process-exit watcher on tinyproxy's PID, for an immediate refresh when it dies.
   2. A watcher on `~/Library/LaunchAgents`, with a 1.5s debounce, to catch `brew services` run from a terminal.
   3. A 60-second fallback poll. Don't poll more often than once a minute; each check starts two Ruby `brew` processes.
+- **`AppDelegate`** owns the monitor and starts it at launch, not when the window appears, so checks and status reporting keep running while the window is closed. It also owns the menu bar icon and applies the Dock icon setting.
+- **Status reporting** pushes to the StatusCake URL only after a check that succeeded *and* found tinyproxy running. StatusCake treats missing pushes as down, so never push on a failed or stale check. While reporting is on, the monitor holds a `ProcessInfo` activity to opt out of App Nap, which would otherwise delay the 60-second poll long enough to cause false "down" alerts.
 - **Start/Stop** waits for the service to actually reach the target state, because `brew services` returns as soon as launchd has loaded or unloaded the job. The wait times out after `serviceChangeTimeout` (30s).
 
 ## Guidelines

@@ -26,6 +26,7 @@ Tinyproxy GUI doesn't replace or modify tinyproxy. It installs the official buil
 - **Homebrew check**: if Homebrew isn't installed, the app tells you and links to [brew.sh](https://brew.sh/).
 - **Logs**: **View → Logs** (⌘L) opens tinyproxy's log file in Console.
 - **Menu bar icon**: click it to open the window. Right-click it to hide or show the Dock icon, or to quit.
+- **Online status reporting** (optional): reports tinyproxy's status to a [StatusCake push test](https://www.statuscake.com/kb/knowledge-base/what-is-push-monitoring/), so you're alerted when it goes down.
 - **Live updates**: notices right away when tinyproxy exits or when the service is started or stopped from a terminal, and checks once a minute as a fallback. The time of the last check is shown at the bottom of the window.
 
 ## Requirements
@@ -64,14 +65,27 @@ Launch the app. On first run, if tinyproxy isn't installed, you'll be asked whet
 | Window | ⟳ Check now | |
 | Tinyproxy menu | Start / Stop | ⇧⌘S |
 | Tinyproxy menu | Refresh | ⌘R |
+| Tinyproxy menu | Configure Online Status Reporting… | |
 | View menu | Logs | ⌘L |
 | View menu | Show Dock Icon | |
 | Menu bar icon | Click: open the window | |
-| Menu bar icon | Right-click: Open, Show Dock Icon, Quit | |
+| Menu bar icon | Right-click: Open, Show Dock Icon, Configure Online Status Reporting…, Quit | |
 
 Closing the window keeps the app running in the menu bar; click the menu bar icon (or the Dock icon) to bring the window back. With the Dock icon hidden, the app has no menu bar of its own, so quit it from the menu bar icon's right-click menu.
 
 Quitting the app doesn't affect tinyproxy: it keeps running (or stays stopped), because it's managed by macOS's launchd, not by this app.
+
+### Online status reporting
+
+To get alerted when tinyproxy goes down, use a [StatusCake](https://www.statuscake.com/) push test:
+
+1. In StatusCake, create an uptime test of type **Push**. Set its period to at least 2 minutes.
+2. Copy the test's **Push URL** (`https://push.statuscake.com/?PK=…&TestID=…&time=0`).
+3. In the app, choose **Tinyproxy → Configure Online Status Reporting…**, paste the URL, and click **Save**.
+
+Each time the app checks and finds tinyproxy running (about once a minute), it sends the Push URL. When tinyproxy stops, the pushes stop and StatusCake marks the test as down after its period. The window shows a **Reporting** row with the time of the last successful push, or the error if StatusCake rejected it.
+
+The pushes also stop when the app isn't running or the Mac is asleep, so StatusCake reports those as down too. To turn reporting off, open the same dialog and click **Turn Off**. The Push URL is saved in the app's preferences.
 
 ### Configuring tinyproxy
 
@@ -103,6 +117,8 @@ Neither launchd nor Homebrew has an API to subscribe to another service's state,
 
 On top of these, the app checks every 60 seconds, which also keeps the update status current.
 
+**Status reporting**: after each check that finds tinyproxy running, the app sends a GET request to the StatusCake Push URL. It never pushes after a failed check, and while reporting is on it opts out of App Nap, so macOS doesn't delay the checks while the app is in the background.
+
 **Logs**: the app reads the `LogFile` setting from `$(brew --prefix)/etc/tinyproxy/tinyproxy.conf` (by default `$(brew --prefix)/var/log/tinyproxy/tinyproxy.log`) and opens that file in Console. If the config has `Syslog On`, it opens Console itself, since the logs then go to the system log.
 
 ## Troubleshooting
@@ -118,6 +134,10 @@ On top of these, the app checks every 60 seconds, which also keeps the update st
 **View → Logs says there's no log file.** tinyproxy creates the log file the first time it starts. Start it once, then try again.
 
 **"Last exit: code N" in the window.** tinyproxy stopped with an error. The formula doesn't restart it automatically, so look at the logs, fix the cause, then press **Start**.
+
+**The Reporting row shows "Failed: StatusCake: Unknown TestID and/or PK".** The Push URL is wrong or the test was deleted. Copy the URL again from the test's page in StatusCake.
+
+**StatusCake reports tinyproxy down while it's running.** Check that the test's period is at least 2 minutes, and that the Mac wasn't asleep. The app only pushes while it's running and awake.
 
 ## Uninstall
 

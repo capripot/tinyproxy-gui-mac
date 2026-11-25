@@ -21,6 +21,9 @@ final class TinyproxyMonitor: ObservableObject {
     @Published var showBrewMissingAlert = false
     @Published var showInstallPrompt = false
     @Published var errorMessage: String?
+    /// StatusCake push URL; reporting is on when it's set.
+    @Published private(set) var pushURL: URL?
+    @Published private(set) var lastReport: StatusReport?
 
     private var brew: Brew?
     private var isRefreshing = false
@@ -31,8 +34,15 @@ final class TinyproxyMonitor: ObservableObject {
     private var watchedPid: Int32?
     private var launchAgentsSource: DispatchSourceFileSystemObject?
     private var debounceTask: Task<Void, Never>?
+    private var isPushing = false
+    private var reportingActivity: NSObjectProtocol?
 
     var isBusy: Bool { busyMessage != nil || isChangingService }
+
+    init() {
+        pushURL = StatusCake.savedPushURL
+        updateReportingActivity()
+    }
 
     func start() {
         guard pollTimer == nil else { return }
@@ -71,6 +81,9 @@ final class TinyproxyMonitor: ObservableObject {
         self.brew = brew
         brewAvailable = true
 
+        // Only a check that just found tinyproxy running counts as "up": after a failed check,
+        // `running` still holds the previous result.
+        var confirmedRunning = false
         do {
             let info = try await brew.formulaInfo()
             installed = !info.installed.isEmpty
@@ -83,6 +96,7 @@ final class TinyproxyMonitor: ObservableObject {
                 running = service.running
                 pid = service.running ? service.pid : nil
                 lastExitCode = service.exit_code
+                confirmedRunning = service.running
             } else {
                 running = false
                 pid = nil
@@ -92,6 +106,7 @@ final class TinyproxyMonitor: ObservableObject {
         }
         watchProcessExit(pid: pid)
         lastCheck = Date()
+        if confirmedRunning { pushStatus() }
 
         // Ask once per launch; the window keeps an Install button afterwards.
         if installed == false && !installPrompted && !isBusy {
@@ -204,6 +219,53 @@ final class TinyproxyMonitor: ObservableObject {
         NSWorkspace.shared.open(Self.brewWebsite)
     }
 
+    // MARK: - Online status reporting
+
+    func setPushURL(_ url: URL?) {
+        guard url != pushURL else { return }
+        if let url {
+            UserDefaults.standard.set(url.absoluteString, forKey: StatusCake.pushURLKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: StatusCake.pushURLKey)
+        }
+        pushURL = url
+        lastReport = nil
+        updateReportingActivity()
+        // Check now, which pushes right away if tinyproxy is running.
+        if url != nil { Task { await refresh() } }
+    }
+
+    private func pushStatus() {
+        guard let url = pushURL, !isPushing else { return }
+        isPushing = true
+        Task {
+            defer { isPushing = false }
+            let report: StatusReport
+            do {
+                try await StatusCake.push(to: url)
+                report = StatusReport(date: Date(), error: nil)
+            } catch {
+                report = StatusReport(date: Date(), error: error.localizedDescription)
+            }
+            // Ignore the result if the URL was changed while the push was in flight.
+            if url == pushURL { lastReport = report }
+        }
+    }
+
+    /// App Nap can delay the once-a-minute check by minutes when the app is in the background,
+    /// which StatusCake would see as tinyproxy being down. Opt out while reporting is on.
+    private func updateReportingActivity() {
+        if pushURL != nil, reportingActivity == nil {
+            reportingActivity = ProcessInfo.processInfo.beginActivity(
+                options: .userInitiatedAllowingIdleSystemSleep,
+                reason: "Reporting tinyproxy's status to StatusCake"
+            )
+        } else if pushURL == nil, let activity = reportingActivity {
+            ProcessInfo.processInfo.endActivity(activity)
+            reportingActivity = nil
+        }
+    }
+
     // MARK: - Logs
 
     private static let consoleApp = URL(fileURLWithPath: "/System/Applications/Utilities/Console.app")
@@ -229,6 +291,12 @@ final class TinyproxyMonitor: ObservableObject {
         }
         NSWorkspace.shared.open([logFile], withApplicationAt: Self.consoleApp, configuration: configuration)
     }
+}
+
+struct StatusReport {
+    let date: Date
+    /// nil when StatusCake accepted the push.
+    let error: String?
 }
 
 /// The few settings we need from tinyproxy.conf.

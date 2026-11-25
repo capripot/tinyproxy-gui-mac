@@ -81,6 +81,29 @@ struct ContentView: View {
                     Text("code \(code)").foregroundStyle(.red)
                 }
             }
+            if monitor.pushURL != nil {
+                GridRow {
+                    Text("Reporting").foregroundStyle(.secondary)
+                    reportingText
+                }
+            }
+        }
+    }
+
+    /// Status of the StatusCake pushes.
+    @ViewBuilder
+    private var reportingText: some View {
+        if let report = monitor.lastReport, let error = report.error {
+            Text("Failed: \(error)")
+                .foregroundStyle(.red)
+                .fixedSize(horizontal: false, vertical: true)
+                .help("Last attempt: \(report.date.formatted(date: .omitted, time: .standard))")
+        } else if !monitor.running {
+            Text("Paused while stopped").foregroundStyle(.orange)
+        } else if let report = monitor.lastReport {
+            Text("Sent at \(report.date.formatted(date: .omitted, time: .standard))")
+        } else {
+            Text("Waiting for first check…").foregroundStyle(.secondary)
         }
     }
 
